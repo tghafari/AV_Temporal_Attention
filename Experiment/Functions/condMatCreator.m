@@ -49,10 +49,8 @@ condMat(:,9)=faceRand;
 %50ms visual presentation is added to the visual on trigger
 condMat(:,18)=condMat(:,6)+.05;
 
-%Decide the duration of each trial:the longest between visual off and
-%auditory -- remove
-tmp=sort(condMat(:,[4,18]),2);
-condMat(:,19)=tmp(:,2);
+%zeors just to keep the ~columns as is
+condMat(:,19)=0;
 
 %Creat a timer for events
 
@@ -63,6 +61,8 @@ for blkNr=1:(numBlock*length(blockInd))
         condMat(stim+(12*(blkNr-1))+1,21)=sum(condMat((12*(blkNr-1)+1):stim+(12*(blkNr-1)),6))+condMat(stim+(12*(blkNr-1))+1,6);
     end
 end
+condMat(:,20)=round(condMat(:,20),5); condMat(:,21)=round(condMat(:,21),5); 
+
 %Define the modality (aud/vis) of each event (trigger)
 eventTimer=zeros(numTrial*2,2);
 for blkNr=1:(numBlock*length(blockInd))
@@ -70,8 +70,8 @@ for blkNr=1:(numBlock*length(blockInd))
         [ones(12,1);3*ones(12,1)]);
     eventTimer(24*(blkNr-1)+1:24*(blkNr-1)+24,:)=sortrows(timrtmp);
 end
-eventTimer=round(eventTimer,5); %compensate for very very small numbers that have been added without any apparent reasons
-condMat(:,20)=round(condMat(:,20),5); condMat(:,21)=round(condMat(:,21),5); 
+% eventTimer=round(eventTimer,5); %compensate for very very small numbers that have been added without any apparent reasons
+
 %Define where to present both stimulus types
 for dbl=1:length(eventTimer)-1
     if eventTimer(dbl,1)==eventTimer(dbl+1,1) && eventTimer(dbl,2)~=eventTimer(dbl+1,2)
