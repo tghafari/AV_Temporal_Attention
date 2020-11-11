@@ -15,8 +15,9 @@ for blockType=1:length(blockInd)
             %4audSOA,5aud ar/rhythmic,6visSOA,7vis ar/rhythmic,
             %8target presence,9face img index,10aud sound(pahandle),
             %11subj resp,12subj RT,13IBIcheck,
-            %14audSOA check,15trialStartTime,
-            %16audStimCheck,17visStimCheck,18visStimOff,19trialLength
+            %14audSOA check,15elapsed time for aud,16elapsed 
+            %time for vis,17aud onset in frames,18vis onset in frames,
+            %19vis offset in frames
         end
         %Put SOAs in condMatPrim
         rng('shuffle');
@@ -46,27 +47,20 @@ condMat(condMat(:,1)==3,[5 7])=0; %both auditory and visual arrhythmic
 %Define which face stim is presented in each trial
 condMat(:,9)=faceRand;
 
-%50ms visual presentation is added to the visual on trigger
-condMat(:,18)=condMat(:,6)+.05;
-
-%zeors just to keep the ~columns as is
-condMat(:,19)=0;
-
 %Creat a timer for events
-
 %Calculate stimuli presentation times with elapsed time
 for blkNr=1:(numBlock*length(blockInd))
     for stim=1:11
-        condMat(stim+(12*(blkNr-1))+1,20)=sum(condMat((12*(blkNr-1)+1):stim+(12*(blkNr-1)),4))+condMat(stim+(12*(blkNr-1))+1,4);
-        condMat(stim+(12*(blkNr-1))+1,21)=sum(condMat((12*(blkNr-1)+1):stim+(12*(blkNr-1)),6))+condMat(stim+(12*(blkNr-1))+1,6);
+        condMat(stim+(12*(blkNr-1))+1,15)=sum(condMat((12*(blkNr-1)+1):stim+(12*(blkNr-1)),4))+condMat(stim+(12*(blkNr-1))+1,4);
+        condMat(stim+(12*(blkNr-1))+1,16)=sum(condMat((12*(blkNr-1)+1):stim+(12*(blkNr-1)),6))+condMat(stim+(12*(blkNr-1))+1,6);
     end
 end
-condMat(:,20)=round(condMat(:,20),5); condMat(:,21)=round(condMat(:,21),5); 
+condMat(:,15)=round(condMat(:,15),5); condMat(:,16)=round(condMat(:,16),5); condMat(condMat(:,15)==0,[15,16])=1; 
 
 %Define the modality (aud/vis) of each event (trigger)
 eventTimer=zeros(numTrial*2,2);
 for blkNr=1:(numBlock*length(blockInd))
-    timrtmp=horzcat([condMat(12*(blkNr-1)+1:12*(blkNr-1)+12,20);condMat(12*(blkNr-1)+1:12*(blkNr-1)+12,21)],...
+    timrtmp=horzcat([condMat(12*(blkNr-1)+1:12*(blkNr-1)+12,15);condMat(12*(blkNr-1)+1:12*(blkNr-1)+12,16)],...
         [ones(12,1);3*ones(12,1)]);
     eventTimer(24*(blkNr-1)+1:24*(blkNr-1)+24,:)=sortrows(timrtmp);
 end
