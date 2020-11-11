@@ -23,10 +23,10 @@ answer     = inputdlg(prompt,dlgtitle,dims,defaultans);
 
 %% Introduce and Make Variables
 
-fileDirRes='Z:\MATLAB\AVTemporalProgram_MainLoc\Results\'; %For Windows
-fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBackgrounds\'; %For Windows
-% fileDirRes  = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/Results/'; %For Mac
-% fileDirStim = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/AVTemporal-Attention/Stimuli/Stimuli/FaceRemovedBackgrounds/'; %For Mac
+% fileDirRes='Z:\MATLAB\AVTemporalProgram_MainLoc\Results\'; %For Windows
+% fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBackgrounds\'; %For Windows
+fileDirRes  = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/Results/'; %For Mac
+fileDirStim = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/AVTemporal-Attention/Stimuli/Stimuli/FaceRemovedBackgrounds/'; %For Mac
 
 [numStim,numBlock,blockInd,correctResp,SOARef,rhythmicSOA,numTrial,restTrials,respTimOut] = varIntro;
 
@@ -35,7 +35,7 @@ fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBack
 [visStim,faceRand]       = visStimReader(fileDirStim,numTrial);                                                        %Bring visual stimuli from the function
 [~,~,condMat,eventTimer] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
 
-%% Preallocation
+%% Preallocation -- remove the unnecessaries
 
 presentingVisStim = cell(numTrial,1);  %Visual stimuli for PTB
 audStartTime      = zeros(numTrial,1); %PsychPortAudio start time
@@ -43,7 +43,7 @@ audStatus         = cell(numTrial,1);  %PsychPortAudio status cell
 visPresCheck      = zeros(numTrial,1); %Start of each timer
 visPresTime       = zeros(numTrial,1); %Flip time of visual stimulus
 stimOnset         = zeros(numTrial,1); %Approximate visual onset time
-vblVisOff         = zeros(numTrial,1); %Flip time of fixation cross after visual stimulus
+vblVisFrms         = zeros(numTrial,1); %Flip time of fixation cross after visual stimulus
 
 %% Setup Auditory Variables
 if strcmp(answer{5},'OSX'); deviceID=[]; else; deviceID=1; end
@@ -88,12 +88,15 @@ end
 
 %% Visual stimulus and fixation cross characteristics and hardware timing
 
-visStimPresSecs = ms2sec(50); %Visual stimulus presentation time in secs
+visStimPresSecs = ms2sec(50);                              %Visual stimulus presentation time in secs
 visStimFrames   = round(visStimPresSecs/ifi);
 rectVisStim     = rectVisStimDest(5,5,display,windowRect); %Destination rectangle to present the stimulus
 
-eventTimer(:,3) = eventTimer(:,1)/ifi; %Convert trigger secs to frames
+eventTimer(:,3) = eventTimer(:,1)/ifi;      %Convert trigger secs to frames
 eventTimer(:,3) = round(eventTimer(:,3)); 
+eventTimer(:,4) = eventTimer(:,3)+3;        %Visual offset
+eventTimer(eventTimer(:,2)==1,4) = eventTimer(eventTimer(:,2)==1,4)-3;
+
 
 [xCenter,yCenter] = RectCenter(windowRect); %Get center coordinates
 fixCrossDimPix    = 30; %Size of each arm of fixation cross in pixels
@@ -142,34 +145,23 @@ for blk=1:3 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) 
         afterGetSecs(frmsInBlk,1)=GetSecs-beforeResp;
         %Trigger an event
         beforeBigIf=GetSecs;
-        if eventTimer(timCntr,3) == frmsInBlk
+        if frmsInBlk >= eventTimer(timCntr,3) && frmsInBlk <= eventTimer(timCntr,4)
             timeStart = GetSecs;
-            if eventTimer(timCntr,2) == 2
+            if (eventTimer(timCntr,2) == 2 || eventTimer(timCntr,2) == 3) 
                 %Visual on
                 Screen('DrawTexture',window,presentingVisStim{trilVis},[],rectVisStim);
                 Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
-                visPresTime(trilVis,1)  = Screen('Flip',window,timeStart-(.5*ifi));
+                trilVis = trilVis+1;
+            elseif eventTimer(timCntr,2) == 1
                 %Visual off-Fixation cross
                 Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
-                vblVisOff(trilVis,1) = Screen('Flip',window,visPresTime(trilVis,1)+.05-(.5*ifi));
+            end
+            vblVisFrms(trilVis,1) = Screen('Flip',window);
+            if eventTimer(timCntr,2) == 1 || eventTimer(timCntr,2) == 2
                 %Auditory on
-                audStartTime(trilAud,1) = PsychPortAudio('RescheduleStart',condMat(trilAud,10),visPresTime(trilAud,1),1); %Reschedules startime to SOA -- 1 is for collecting the aud onset
-                audStatus{trilAud,1}    = PsychPortAudio('GetStatus',condMat(trilAud,10));                                %Check the status of audio
-                trilAud = trilAud+1; trilVis = trilVis+1;
-            elseif eventTimer(timCntr,2) == 1
-                %Auditory on
-                audStartTime(trilAud,1) = PsychPortAudio('RescheduleStart',condMat(trilAud,10),0,1);
-                audStatus{trilAud,1}    = PsychPortAudio('GetStatus',condMat(trilAud,10));
-                trilAud = trilAud+1;
-            elseif eventTimer(timCntr,2) == 3
-                %Visual on
-                Screen('DrawTexture',window,presentingVisStim{trilVis},[],rectVisStim);
-                Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
-                visPresTime(trilVis,1) = Screen('Flip',window,timeStart-(.5*ifi));
-                %Visual off Fixation cross
-                Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
-                vblVisOff(trilVis,1) = Screen('Flip',window,visPresTime(trilVis,1)+.05-(.5*ifi));
-                trilVis = trilVis+1;
+                audStartTime(trilAud,1) = PsychPortAudio('RescheduleStart',condMat(trilAud,10),timeStart,1);
+                audStatus{trilAud,1}    = PsychPortAudio('GetStatus',condMat(trilAud,10));  %Can be removed after debugging
+                trilAud = trilAud+1; 
             end
             timCntr = timCntr+1; 
             %Break the while on rest trials
@@ -179,9 +171,9 @@ for blk=1:3 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) 
                 break
             end
         else
-            before=GetSecs;
-            WaitSecs(ifi)
-            afterWaitScs(frmsInBlk,1)=GetSecs-before;
+            %Visual off-Fixation cross
+            Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
+            vblVisFrms(trilVis,1) = Screen('Flip',window);
         end
         afterBigIf(frmsInBlk,1)=GetSecs-beforeBigIf;
     end
