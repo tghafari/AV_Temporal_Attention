@@ -8,8 +8,8 @@ function condMat = responseCollector(condMat,trial,firstPress,lastPress)
 
 condMat(trial,11) = find(firstPress);
 condMat(trial,12) = max(firstPress)-condMat(trial,14);
-condMat(trial,22) = find(lastPress);
-condMat(trial,23) = max(firstPress)-condMat(trial,14);
+condMat(trial,20) = find(lastPress);
+condMat(trial,21) = max(firstPress)-condMat(trial,14);
 
 KbQueueFlush;
 
