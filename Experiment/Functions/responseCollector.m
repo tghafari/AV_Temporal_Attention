@@ -1,4 +1,4 @@
-function condMat = responseCollector(condMat,trial,audStartTime,firstPress,lastPress)
+function condMat = responseCollector(condMat,trial,firstPress,lastPress)
 %condMat = responseCollector(condMat,trial,audStartTime,partDevCod)
 %collects response key and response time in condition matrix
 %audStartTime -> auditory presentation onset
@@ -7,9 +7,9 @@ function condMat = responseCollector(condMat,trial,audStartTime,firstPress,lastP
 %afterVisSecs -> time after visual stimulus presentation
 
 condMat(trial,11) = find(firstPress);
-condMat(trial,12) = max(firstPress)-audStartTime(trial,1);
+condMat(trial,12) = max(firstPress)-condMat(trial,14);
 condMat(trial,22) = find(lastPress);
-condMat(trial,23) = max(firstPress)-audStartTime(trial,1);
+condMat(trial,23) = max(firstPress)-condMat(trial,14);
 
 KbQueueFlush;
 
