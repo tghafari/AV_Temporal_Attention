@@ -2,6 +2,12 @@
 
 clear; clc
 %Lets change the frequency of vis and aud to their preferred frequency (.7 & 1.4 -- nature comm 2020- Zalta)
+
+% stim onsets for each pin binary
+% frq tagging
+% number of samples in 5ms twice longer half inverted cosine 
+% confirm Ali's frq tagging audio
+% send the condition mat to Geoff (convert to table and save as csv)
 %% Handle on-screen errors
 
 % try
@@ -29,23 +35,26 @@ fileDirRes  = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/Result
 fileDirStim = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/AVTemporal-Attention/Stimuli/Stimuli/FaceRemovedBackgrounds/'; %For Mac
 
 [numStim,numBlock,blockInd,correctResp,SOARef,rhythmicSOA,numTrial,restTrials,respTimOut] = varIntro;
-
+[trigOff,trigStart,trigVisOn,trigVisOff,trigAud,trigFrqTag,~] = triggerIntro; %introduce 
 %% Matrix of images and conditions
 
 [visStim,faceRand] = visStimReader(fileDirStim,numTrial);                                                        %Bring visual stimuli from the function
 [~,~,condMat,~]    = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
-
-%% Preallocation -- remove the unnecessaries
+%% Preallocation -- remove the unnecessaries and functionize at eventually
 
 presentingVisStim = cell(numTrial,1);  %Visual stimuli for PTB
-% audStartTime      = zeros(numTrial,1); %PsychPortAudio start time
 audStatus         = cell(numTrial,1);  %PsychPortAudio status cell
+vblVisFrms        = zeros(725,1);      %Flip time of fixation cross after visual stimulus
+afterWhile        = zeros(3,1);
+afterAud          = zeros(numTrial,1); 
+
+% audStartTime      = zeros(numTrial,1); %PsychPortAudio start time
 % visPresCheck      = zeros(numTrial,1); %Start of each timer
 % visPresTime       = zeros(numTrial,1); %Flip time of visual stimulus
 % stimOnset         = zeros(numTrial,1); %Approximate visual onset time
-vblVisFrms        = zeros(725,1);      %Flip time of fixation cross after visual stimulus
 
 %% Setup Auditory Variables
+
 if strcmp(answer{5},'OSX'); deviceID=[]; else; deviceID=1; end
 
 [toneSoundofRhythm,toneSoundofDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
@@ -85,7 +94,6 @@ HideCursor();
 for readImg = 1:size(condMat,1) %Create an openGL texture for face images
     presentingVisStim{readImg} = Screen('MakeTexture',window,visStim{readImg}(5:end,:,:));
 end
-
 %% Visual stimulus and fixation cross characteristics and hardware timing
 
 visStimPresSecs = ms2sec(50);                              %Visual stimulus presentation time in secs
@@ -94,7 +102,7 @@ rectVisStim     = rectVisStimDest(5,5,display,windowRect); %Destination rectangl
 
 condMat(:,17) = round(condMat(:,15)/ifi);  %Auditory stim onset in frms
 condMat(:,18) = round(condMat(:,16)/ifi);  %Visual stim onset in frms
-condMat(:,19) = condMat(:,18)+3;            %Visual stim offset in frms
+condMat(:,19) = condMat(:,18)+3;           %Visual stim offset in frms
 
 [xCenter,yCenter] = RectCenter(windowRect); %Get center coordinates
 fixCrossDimPix    = 30; %Size of each arm of fixation cross in pixels
@@ -103,10 +111,7 @@ lineWidthPix      = 4; %Line width of cross
 lineColorRGB      = [0.4,0.4,0.4]; %Color of fixation cross
 Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA'); %Blend funciton on
 
-%% Triggers
-
-[outTrig, outAddr] = initTriggerSend(bTrigger); 
-
+[trigHandle,trigAdd] = triggerInit(MEGLab); %initiate triggers
 %% Main Experiment
 
 % Start KbQueu routine
@@ -123,12 +128,11 @@ PsychPortAudio('Start',noStimpahandle,1,inf);
 % Countdown to start
 countDownToBegin(3,window,black)
 
-afterWhile=zeros(3,1); afterAud=zeros(numTrial,1); VisOn=0;
-trilAud = 1;  trilVis = 1; trlVisCntr = 0; rest = 1; 
+trilAud = 1;  trilVis = 1; trlVisCntr = 0;
 for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * repetition of each block
     
     %Beginig of blocks fixation cross
-    tag_trigger_send(outTrig, outAddr, (TR_INFO + TR_TRIAL), bTrigger); %change the parameters
+    triggerSend(trigHandle,trigAdd,trigStart,MEGLab); 
     Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
     condMat(trilAud,13) = Screen('Flip',window);
     
@@ -142,7 +146,6 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
         %Trigger an event
         if frmsInBlk >= condMat(trilVis,18) && frmsInBlk <= condMat(trilVis,19)
                 %Visual on
-                VisOn = 1;
                 Screen('DrawTexture',window,presentingVisStim{trilVis},[],rectVisStim);
                 Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
                 trlVisCntr = trlVisCntr+1;
@@ -150,21 +153,22 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
             %Visual off-Fixation cross
             Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
         end
-        if VisOn; tag_trigger_send(outTrig, outAddr, (TR_INFO + TR_TRIAL), bTrigger); VisOn=0; end %change the parameters 
+        if trlVisCntr==1;     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
+        elseif trlVisCntr==3; triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
         vblVisFrms(frmsInBlk,1) = Screen('Flip',window); %Flip the screen every frame
         if trlVisCntr==3; trilVis = trilVis+1; trlVisCntr = 0;  end
 
         if frmsInBlk == condMat(trilAud,17) 
             audOnset = GetSecs;
             %Auditory on
-            tag_trigger_send(outTrig, outAddr, (TR_INFO + TR_TRIAL), bTrigger); %change the parameters
+            triggerSend(trigHandle,trigAdd,trigAud,MEGLab); 
             condMat(trilAud,14) = PsychPortAudio('RescheduleStart',condMat(trilAud,10),audOnset,1);
             audStatus{trilAud,1} = PsychPortAudio('GetStatus',condMat(trilAud,10));  %Can be removed after debugging
             afterAud(trilAud,1)=GetSecs-audOnset;
             trilAud = trilAud+1;
         end
     end
-    tag_trigger_send(outTrig, outAddr, TR_OFF, bTrigger); % clear trigger
+    triggerSend(trigHandle,trigAdd,trigOff,MEGLab); %clear trigger
     
     %Rest after each block 
     restTextPresenter(playerRFT,window,black,expDev,numTrial,trilAud,condMat);
