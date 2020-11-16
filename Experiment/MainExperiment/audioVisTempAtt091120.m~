@@ -39,7 +39,7 @@ fileDirStim = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/AVTemp
 
 presentingVisStim = cell(numTrial,1);  %Visual stimuli for PTB
 % audStartTime      = zeros(numTrial,1); %PsychPortAudio start time
-audStatus         = cell(numTrial,1);  %PsychPortAudio status cell
+% audStatus         = cell(numTrial,1);  %PsychPortAudio status cell
 % visPresCheck      = zeros(numTrial,1); %Start of each timer
 % visPresTime       = zeros(numTrial,1); %Flip time of visual stimulus
 % stimOnset         = zeros(numTrial,1); %Approximate visual onset time
@@ -105,7 +105,7 @@ Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA'); %Blend f
 
 %% Triggers
 
-[outTrig, outAddr] = initTriggerSend(bTrigger); 
+[outTrig, outAddr] = tag_init_trigger_send(bTrigger); 
 
 %% Main Experiment
 
@@ -123,7 +123,7 @@ PsychPortAudio('Start',noStimpahandle,1,inf);
 % Countdown to start
 countDownToBegin(3,window,black)
 
-afterWhile=zeros(3,1); afterAud=zeros(numTrial,1); VisOn=0;
+afterN1=zeros(3,1); afterWhile=zeros(3,1); afterAud=zeros(numTrial,1);
 trilAud = 1;  trilVis = 1; trlVisCntr = 0; rest = 1; 
 for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * repetition of each block
     
@@ -142,7 +142,6 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
         %Trigger an event
         if frmsInBlk >= condMat(trilVis,18) && frmsInBlk <= condMat(trilVis,19)
                 %Visual on
-                VisOn = 1;
                 Screen('DrawTexture',window,presentingVisStim{trilVis},[],rectVisStim);
                 Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
                 trlVisCntr = trlVisCntr+1;
@@ -150,21 +149,18 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
             %Visual off-Fixation cross
             Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
         end
-        if VisOn; tag_trigger_send(outTrig, outAddr, (TR_INFO + TR_TRIAL), bTrigger); VisOn=0; end %change the parameters 
         vblVisFrms(frmsInBlk,1) = Screen('Flip',window); %Flip the screen every frame
         if trlVisCntr==3; trilVis = trilVis+1; trlVisCntr = 0;  end
 
         if frmsInBlk == condMat(trilAud,17) 
             audOnset = GetSecs;
             %Auditory on
-            tag_trigger_send(outTrig, outAddr, (TR_INFO + TR_TRIAL), bTrigger); %change the parameters
             condMat(trilAud,14) = PsychPortAudio('RescheduleStart',condMat(trilAud,10),audOnset,1);
-            audStatus{trilAud,1} = PsychPortAudio('GetStatus',condMat(trilAud,10));  %Can be removed after debugging
+%             audStatus{trilAud,1} = PsychPortAudio('GetStatus',condMat(trilAud,10));  %Can be removed after debugging
             afterAud(trilAud,1)=GetSecs-audOnset;
             trilAud = trilAud+1;
         end
     end
-    tag_trigger_send(outTrig, outAddr, TR_OFF, bTrigger); % clear trigger
     
     %Rest after each block 
     restTextPresenter(playerRFT,window,black,expDev,numTrial,trilAud,condMat);
