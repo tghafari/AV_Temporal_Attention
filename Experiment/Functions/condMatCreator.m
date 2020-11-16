@@ -1,4 +1,4 @@
-function [condMatPrim,condCell,condMat,eventTimer] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp)
+function [condMatPrim,condCell,condMat,condMatTbl,eventTimer] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp)
 % [condMatPrim, condCell, condMat] = condMatCreator(blockInd, numBlock, numStim, SOARef, rhythmicSOA, faceRand,correctResp)
 %   Creates conition matrix for audioVisTempAtt program
 
@@ -9,15 +9,15 @@ condCell=cell(length(blockInd)*numBlock,1);
 
 for blockType=1:length(blockInd)
     for block=1:numBlock
-        condMatPrim=nan(numStim,19);
+        condMatPrim=nan(numStim,21);
         for trials=1:numStim
-            condMatPrim(trials,:)=[blockType,block,trials,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+            condMatPrim(trials,:)=[blockType,block,trials,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
             %4audSOA,5aud ar/rhythmic,6visSOA,7vis ar/rhythmic,
             %8target presence,9face img index,10aud sound(pahandle),
             %11subj resp,12subj RT,13IBIcheck,
             %14audSOA check,15elapsed time for aud,16elapsed 
             %time for vis,17aud onset in frames,18vis onset in frames,
-            %19vis offset in frames
+            %19vis offset in frames,20last key presd,21last key time
         end
         %Put SOAs in condMatPrim
         rng('shuffle');
@@ -77,4 +77,8 @@ end
 eventTimer(eventTimer(:,1)==0,1)=1;
 eventTimer(isnan(eventTimer(:,2)),:)=[];
 
+condMatTbl = array2table(condMat,'VariableNames',{'blockType','blockNm','trilNm','audSOA','aud_reg/irreg','visSOA','vis_reg/irreg','target_presence'...
+    ,'face_img_ix','aud_handle','key_pressed','RT','IBI_time','aud_SOA_check','aud_in_elapsed','vis_in_elapsed','aud_onset_frms',...
+    'vis_onset_frms','vis_offset_frms','last_key_pressed','last_key_time'});
+    
 end

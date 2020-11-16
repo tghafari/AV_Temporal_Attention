@@ -27,19 +27,21 @@ dims       = [1,30;1,30;1,30;1,30;1,30];
 defaultans = {'B51A','20201120','Task','0','OSX'};
 answer     = inputdlg(prompt,dlgtitle,dims,defaultans);
 
-%% Introduce and Make Variables
+%% Introduce
 
-% fileDirRes='Z:\MATLAB\AVTemporalProgram_MainLoc\Results\'; %For Windows
-% fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBackgrounds\'; %For Windows
-fileDirRes  = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/Results/'; %For Mac
-fileDirStim = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/AVTemporal-Attention/Stimuli/Stimuli/FaceRemovedBackgrounds/'; %For Mac
+fileDirRes='Z:\MATLAB\AVTemporalProgram_MainLoc\Results\'; %For Windows
+fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBackgrounds\'; %For Windows
+% fileDirRes  = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/Results/'; %For Mac
+% fileDirStim = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/AVTemporal-Attention/Stimuli/Stimuli/FaceRemovedBackgrounds/'; %For Mac
+
+%% Make variables
 
 [numStim,numBlock,blockInd,correctResp,SOARef,rhythmicSOA,numTrial,restTrials,respTimOut] = varIntro;
 [trigOff,trigStart,trigVisOn,trigVisOff,trigAud,trigFrqTag,~] = triggerIntro; %introduce 
 %% Matrix of images and conditions
 
-[visStim,faceRand] = visStimReader(fileDirStim,numTrial);                                                        %Bring visual stimuli from the function
-[~,~,condMat,~]    = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
+[visStim,faceRand] = visStimReader(fileDirStim,numTrial); %Bring visual stimuli from the function
+[~,~,condMat,condMatTbl,~]    = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
 %% Preallocation -- remove the unnecessaries and functionize at eventually
 
 presentingVisStim = cell(numTrial,1);  %Visual stimuli for PTB
