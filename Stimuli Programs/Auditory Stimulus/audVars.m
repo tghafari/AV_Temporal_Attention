@@ -1,14 +1,30 @@
-function [toneSoundofRhythm,toneSoundofDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars 
-%[toneSoundofRhythm,toneSoundofDetect,FTpower,nrchannels,trigger,playerRFT] = audVars 
+function [rmpToneRhythm,rmpToneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars 
+% [rmpToneRhythm,rmpToneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars 
+%This function introduces auditory variables for both stimulus and
+%frequency tagging sounds
 
-%Make auditory tone to detect--including 5 ms rise and 5 ms fall shaped by a Blackman window (2017- van Diepen)
-sampRate   = 48000;                     %Frequency of the sound
-duration   = ms2sec(50);                %Duration (time in secs)
-audTimeVec = 0:1/sampRate:duration;     %Auditory duration in sf steps
-indivAmp   = .5;                        %Adjuste to individual thresholds
-toneFreq   = 1000;
-toneSoundofRhythm = indivAmp*sin(2*pi*toneFreq*audTimeVec);
-toneSoundofDetect = indivAmp*sin(2*pi*toneFreq*1.1*audTimeVec);
+%Basic sound vars
+sampRate      = 48000;                     %Frequency of the sound
+rampDur       = ms2sec(15);                %Duration of fade in/out (in secs)
+duration      = ms2sec(50)-rampDur*2;      %Duration (in secs)
+audTimeVec    = 0:1/sampRate:duration;     %Auditory duration in sf steps
+audRampVec    = 0:1/sampRate:rampDur;
+indivAmp      = .5;                        
+toneFreq      = 2000;                     
+detectToneDif = 1.1;                       %Adjuste to individual thresholds- difference between detect and rhythm tone
+
+%Create rampd sound
+toneRhythm = indivAmp*sin(2*pi*toneFreq*audTimeVec); %Auditory data for main part
+toneDetect = indivAmp*sin(2*pi*toneFreq*detectToneDif*audTimeVec);
+rmpRhythm  = toneRhythm(1:length(audRampVec));  %Auditory data for ramped part
+rmpDetect  = toneDetect(1:length(audRampVec));  
+
+%Construct ramps
+ampEnv = [linspace(0,1,length(rmpRhythm)),ones(1,length(toneRhythm)),linspace(1,0,length(rmpRhythm))];
+
+%Multiply the amplitude envelope by the original waveform
+rmpToneRhythm = [rmpRhythm,toneRhythm,rmpRhythm] .* ampEnv;
+rmpToneDetect = [rmpDetect,toneDetect,rmpDetect] .* ampEnv;
 
 %Make frequency tagging noise
 FTduration = 200;                       %Duration of a trial
@@ -17,6 +33,4 @@ FTpower    = 2;                         %Check this on Screen%
 nrchannels = 2;                         %Number of channels
 [FTAuditory,trigger]  = create_AM(tagFreq,FTpower,FTduration,sampRate,1); %Trigger is not used here
 playerRFT             = audioplayer(FTAuditory,sampRate);
-
 end
-

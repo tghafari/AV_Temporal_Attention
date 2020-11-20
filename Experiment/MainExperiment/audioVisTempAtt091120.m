@@ -37,7 +37,7 @@ fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBack
 %% Make variables
 
 [numStim,numBlock,blockInd,correctResp,SOARef,rhythmicSOA,numTrial,restTrials,respTimOut] = varIntro;
-[trigOff,trigStart,trigVisOn,trigVisOff,trigAud,trigFrqTag,~] = triggerIntro; %introduce 
+[trigOff,trigStart,trigVisOn,trigVisOff,trigAud,trigFrqTag,~] = triggerIntro;               %introduce triggers
 %% Matrix of images and conditions
 
 [visStim,faceRand] = visStimReader(fileDirStim,numTrial); %Bring visual stimuli from the function
@@ -59,9 +59,9 @@ afterAud          = zeros(numTrial,1);
 
 if strcmp(answer{5},'OSX'); deviceID=[]; else; deviceID=1; end
 
-[toneSoundofRhythm,toneSoundofDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
+[toneRhythm,toneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
 %Initializes Sound Driver- PTB
-[condMat,stimpahandle,noStimpahandle] = PTBSoundSetuper(condMat,deviceID,sampRate,nrchannels,FTpower,toneSoundofRhythm,toneSoundofDetect);
+[condMat,stimpahandle,noStimpahandle] = PTBSoundSetuper(condMat,deviceID,sampRate,nrchannels,FTpower,toneRhythm,toneDetect);
 %% Screen Setup
 
 MEGLab = str2double(answer{4}); % MEG lab computer-> 1 PC->0
@@ -107,9 +107,9 @@ condMat(:,18) = round(condMat(:,16)/ifi);  %Visual stim onset in frms
 condMat(:,19) = condMat(:,18)+3;           %Visual stim offset in frms
 
 [xCenter,yCenter] = RectCenter(windowRect); %Get center coordinates
-fixCrossDimPix    = 30; %Size of each arm of fixation cross in pixels
+fixCrossDimPix    = 30;                     %Size of each arm of fixation cross in pixels
 allCoords         = fixCrossCoord(fixCrossDimPix);
-lineWidthPix      = 4; %Line width of cross
+lineWidthPix      = 4;                      %Line width of cross
 lineColorRGB      = [0.4,0.4,0.4]; %Color of fixation cross
 Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA'); %Blend funciton on
 
