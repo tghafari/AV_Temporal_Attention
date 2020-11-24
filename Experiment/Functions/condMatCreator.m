@@ -1,11 +1,9 @@
-function [condMatPrim,condCell,condMat,condMatTbl,eventTimer] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp)
+function [condMatPrim,blkCondCell,condMat,eventTimer] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp)
 % [condMatPrim, condCell, condMat] = condMatCreator(blockInd, numBlock, numStim, SOARef, rhythmicSOA, faceRand,correctResp)
 %   Creates conition matrix for audioVisTempAtt program
 
-%unnecessary columns are to be removed
-
 %Preallocation
-condCell=cell(length(blockInd)*numBlock,1);
+blkCondCell=cell(length(blockInd)*numBlock,1);
 
 for blockType=1:length(blockInd)
     for block=1:numBlock
@@ -32,12 +30,12 @@ for blockType=1:length(blockInd)
         %Randomize trials in each block and put them in condCell
         rng('shuffle');
         randomInd=randperm(numStim-1); %Do not randomize first row(because of fix.cross 1000ms)
-        condCell{block+(numBlock*(blockType-1)),1}=condMatPrim([1 randomInd+1],:); 
+        blkCondCell{block+(numBlock*(blockType-1)),1}=condMatPrim([1 randomInd+1],:); 
     end
 end
 
 %Randomize blocks and put them in the property matrix
-condCell=condCell(randperm(length(condCell))); condMat=cell2mat(condCell);
+blkCondCell=blkCondCell(randperm(length(blkCondCell))); condMat=cell2mat(blkCondCell);
 
 %Label aud and vis type
 condMat(condMat(:,1)==1,5)=1; condMat(condMat(:,1)==1,7)=0; %auditory rhythmic visual arrhythmic
@@ -76,9 +74,5 @@ end
 
 eventTimer(eventTimer(:,1)==0,1)=1;
 eventTimer(isnan(eventTimer(:,2)),:)=[];
-
-condMatTbl = array2table(condMat,'VariableNames',{'blockType','blockNm','trilNm','audSOA','aud_reg/irreg','visSOA','vis_reg/irreg','target_presence'...
-    ,'face_img_ix','aud_handle','key_pressed','RT','IBI_time','aud_SOA_check','aud_in_elapsed','vis_in_elapsed','aud_onset_frms',...
-    'vis_onset_frms','vis_offset_frms','last_key_pressed','last_key_time'});
-    
+  
 end

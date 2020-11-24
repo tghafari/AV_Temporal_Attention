@@ -1,5 +1,5 @@
-function vbl = restTextPresenter(soundPlayer,window,color,experDevCod,numTrial,trial,condMat)
-%vbl = restTextPresenter(soundPlayer,window,color,experDevCod,numTrial,trial,condMat)
+function [blckHistory,vbl] = restTextPresenter(blckHistory,block,soundPlayer,window,color,experDevCod,numTrial,trial,condMat)
+%[blckHistory,vbl] = restTextPresenter(blckHistory,block,soundPlayer,window,color,experDevCod,numTrial,trial,condMat)
 %   text is shown when the rest starts (end of each block)
 %soundPlayer -> frequency tagging sound
 %window -> output of PsychImaging('OpenWindow',...)
@@ -15,9 +15,11 @@ restTxt=['Rest for a few minutes \n Remaining:' num2str(round((numTrial-trial)*1
 nxtBlockTxt=['Next block is: \n' blockTypTxt{condMat(trial,1)}];
 contTxt='Let the experimenter know when you are ready';
 
+blckHistory{block}=blockTypTxt{condMat(trial-1,1)};
+
 WaitSecs(.5)
 pause(soundPlayer) %Pause the auditory frequency tagging during rest
-clear sound       
+clear sound    %check to see if can be deleted   
 Screen('Flip',window);
 DrawFormattedText(window,restTxt,'center','center',color); % Opens message
 Screen('Flip',window);
@@ -31,7 +33,7 @@ DrawFormattedText(window, contTxt, 'center', 'center', color); % Opens message
 Screen('Flip', window);
 KbStrokeWait(experDevCod);
 WaitSecs(.1)
-% resume(soundPlayer) %Resume auditory FT
+% resume(soundPlayer) %Resume auditory FT -- DO it after debugging
 
 end
 
