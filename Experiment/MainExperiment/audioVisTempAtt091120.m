@@ -40,11 +40,12 @@ fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBack
 [trigOff,trigStart,trigVisOn,trigVisOff,trigAud,trigFrqTag,~] = triggerIntro;               %introduce triggers
 %% Matrix of images and conditions
 
-[visStim,faceRand] = visStimReader(fileDirStim,numTrial); %Bring visual stimuli from the function
-[~,~,condMat,condMatTbl,~]    = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
+[visStim,faceRand]         = visStimReader(fileDirStim,numTrial); %Bring visual stimuli from the function
+[~,~,condMat,~] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
 %% Preallocation -- remove the unnecessaries and functionize at eventually
 
 presentingVisStim = cell(numTrial,1);  %Visual stimuli for PTB
+blckHistory       = cell(numBlock,1);  %Confirms the order of blocks presented
 audStatus         = cell(numTrial,1);  %PsychPortAudio status cell
 vblVisFrms        = zeros(725,1);      %Flip time of fixation cross after visual stimulus
 afterWhile        = zeros(3,1);
@@ -155,27 +156,27 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
             %Visual off-Fixation cross
             Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
         end
-        if trlVisCntr==1;     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
+        if trlVisCntr==1,     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
         elseif trlVisCntr==3; triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
         vblVisFrms(frmsInBlk,1) = Screen('Flip',window); %Flip the screen every frame
-        if trlVisCntr==3; trilVis = trilVis+1; trlVisCntr = 0;  end
+        if trlVisCntr==3, trilVis = trilVis+1; trlVisCntr = 0;  end
 
         if frmsInBlk == condMat(trilAud,17) 
             audOnset = GetSecs;
             %Auditory on
             triggerSend(trigHandle,trigAdd,trigAud,MEGLab); 
-            condMat(trilAud,14) = PsychPortAudio('RescheduleStart',condMat(trilAud,10),audOnset,1);
+            condMat(trilAud,14)  = PsychPortAudio('RescheduleStart',condMat(trilAud,10),audOnset,1);
             audStatus{trilAud,1} = PsychPortAudio('GetStatus',condMat(trilAud,10));  %Can be removed after debugging
-            afterAud(trilAud,1)=GetSecs-audOnset;
+            afterAud(trilAud,1)  = GetSecs-audOnset; %should be removed after debugging
             trilAud = trilAud+1;
         end
     end
     triggerSend(trigHandle,trigAdd,trigOff,MEGLab); %clear trigger
     
     %Rest after each block 
-    restTextPresenter(playerRFT,window,black,expDev,numTrial,trilAud,condMat);
+    [blckHistory,~] = restTextPresenter(blckHistory,blk,playerRFT,window,black,expDev,numTrial,trilAud,condMat);
     
-    afterWhile(blk)=GetSecs-beforeWhile;
+    afterWhile(blk)=GetSecs-beforeWhile; %should be removed after debugging
     %Thank you messeage at the end
     if trilAud == 48  && trilVis == 48
         endTextPresenter(window,black)
@@ -189,3 +190,19 @@ end
 PsychPortAudio('Close');
 stop(playerRFT)
 sca
+
+%% Saving data
+% condCell = mat2cell(condMat,size(condMat,1));
+condCell=cell(size(condMat)); 
+condCell(condMat(:,1)==1)={'audReg'}; condCell(condMat(:,1)==2)={'visReg'}; condCell(condMat(:,1)==3)={'noReg'};
+condCell(condMat(:,5)==0,2)={'audIrreg'}; condCell(condMat(:,5)==1,2)={'audReg'};
+condCell(condMat(:,7)==0,3)={'visIrreg'}; condCell(condMat(:,7)==1,3)={'visReg'};
+
+
+for ii=1:252
+condCell(ii,2) = mat2cell(condMat(ii,2),1);
+condCell(ii,3) = mat2cell(condMat(ii,3),1);
+end
+condMatTbl = array2table(condMat,'VariableNames',{'blockType','blockNm','trilNm','audSOA','aud_reg/irreg','visSOA','vis_reg/irreg','target_presence'...
+    ,'face_img_ix','aud_handle','key_pressed','RT','IBI_time','aud_SOA_check','aud_in_elapsed','vis_in_elapsed','aud_onset_frms',...
+    'vis_onset_frms','vis_offset_frms','last_key_pressed','last_key_time'});  
