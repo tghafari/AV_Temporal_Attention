@@ -21,10 +21,10 @@ clear; clc
 
 %% Input
 
-prompt     = {'Subject Code','Date','Training/Task','Testing PC','OS'}; %MEG PC subjects code, MEG PC date format, MeG=1 PC=0, OS-> mac=[] win=1
+prompt     = {'Subject Numbed','Subject Code','Date','Training/Task','Testing PC','OS'}; %MEG PC subjects code, MEG PC date format, MeG=1 PC=0, OS-> mac=[] win=1
 dlgtitle   = 'Details';
-dims       = [1,30;1,30;1,30;1,30;1,30];
-defaultans = {'B51A','20201120','Task','0','OSX'};
+dims       = [1,30;1,30;1,30;1,30;1,30;1,30];
+defaultans = {'101','B51A','20201120','Task','0','OSX'};
 answer     = inputdlg(prompt,dlgtitle,dims,defaultans);
 
 %% Introduce
@@ -40,8 +40,8 @@ fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBack
 [trigOff,trigStart,trigVisOn,trigVisOff,trigAud,trigFrqTag,~] = triggerIntro;               %introduce triggers
 %% Matrix of images and conditions
 
-[visStim,faceRand]         = visStimReader(fileDirStim,numTrial); %Bring visual stimuli from the function
-[~,~,condMat,~] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
+[visStim,faceRand] = visStimReader(fileDirStim,numTrial); %Bring visual stimuli from the function
+[~,~,condMat,~]    = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp); %Conditions Matrix
 %% Preallocation -- remove the unnecessaries and functionize at eventually
 
 presentingVisStim = cell(numTrial,1);  %Visual stimuli for PTB
@@ -192,17 +192,17 @@ stop(playerRFT)
 sca
 
 %% Saving data
-% condCell = mat2cell(condMat,size(condMat,1));
-condCell=cell(size(condMat)); 
-condCell(condMat(:,1)==1)={'audReg'}; condCell(condMat(:,1)==2)={'visReg'}; condCell(condMat(:,1)==3)={'noReg'};
+condCell=cell(size(condMat,1),5); 
+condCell(condMat(:,1)==1)={'audReg'};     condCell(condMat(:,1)==2)={'visReg'}; condCell(condMat(:,1)==3)={'noReg'};
 condCell(condMat(:,5)==0,2)={'audIrreg'}; condCell(condMat(:,5)==1,2)={'audReg'};
 condCell(condMat(:,7)==0,3)={'visIrreg'}; condCell(condMat(:,7)==1,3)={'visReg'};
+condCell(condMat(:,8)==0,4)={'noTarget'}; condCell(condMat(:,8)==1,4)={'Target'};
+condCell(condMat(:,11)==0,5)={'noResp'};  condCell(condMat(:,11)==1,5)={'Resp'};
 
-
-for ii=1:252
-condCell(ii,2) = mat2cell(condMat(ii,2),1);
-condCell(ii,3) = mat2cell(condMat(ii,3),1);
-end
 condMatTbl = array2table(condMat,'VariableNames',{'blockType','blockNm','trilNm','audSOA','aud_reg/irreg','visSOA','vis_reg/irreg','target_presence'...
     ,'face_img_ix','aud_handle','key_pressed','RT','IBI_time','aud_SOA_check','aud_in_elapsed','vis_in_elapsed','aud_onset_frms',...
     'vis_onset_frms','vis_offset_frms','last_key_pressed','last_key_time'});  
+%Clear unnecessary files
+% clear ...
+mkdir([fileDirRes, 'Sub' answer{1}]);
+save([fileDirRes, 'Sub' answer{1} filesep 'BehavioralData' filesep])
