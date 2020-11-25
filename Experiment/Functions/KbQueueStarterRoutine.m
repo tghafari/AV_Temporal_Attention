@@ -14,7 +14,7 @@ scanList = zeros(1,256);
 scanList(KB) = 1;           
 
 KbQueueCreate(expDevCode,scanList);  %Create queue
-KbQueueStart;                    %Start listening to input
-KbQueueFlush;                    %Clear all keyboard presses so far
+KbQueueStart;                        %Start listening to input
+KbQueueFlush;                        %Clear all keyboard presses so far
 
 end
