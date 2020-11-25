@@ -2,12 +2,6 @@
 
 clear; clc
 %Lets change the frequency of vis and aud to their preferred frequency (.7 & 1.4 -- nature comm 2020- Zalta)
-
-% stim onsets for each pin binary
-% frq tagging
-% number of samples in 5ms twice longer half inverted cosine 
-% confirm Ali's frq tagging audio
-% send the condition mat to Geoff (convert to table and save as csv)
 %% Handle on-screen errors
 
 % try
@@ -19,20 +13,10 @@ clear; clc
 % end
 % Screen('CloseAll');
 
-%% Input
+%% Input and OS folder preparations
 
-prompt     = {'Subject Numbed','Subject Code','Date','Training/Task','Testing PC','OS'}; %MEG PC subjects code, MEG PC date format, MeG=1 PC=0, OS-> mac=[] win=1
-dlgtitle   = 'Details';
-dims       = [1,30;1,30;1,30;1,30;1,30;1,30];
-defaultans = {'101','B51A','20201120','Task','0','OSX'};
-answer     = inputdlg(prompt,dlgtitle,dims,defaultans);
-
-%% Introduce
-
-fileDirRes='Z:\MATLAB\AVTemporalProgram_MainLoc\Results\'; %For Windows
-fileDirStim='Z:\MATLAB\AVTemporalProgram_MainLoc\Stimuli\Stimuli\FaceRemovedBackgrounds\'; %For Windows
-% fileDirRes  = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/Results/'; %For Mac
-% fileDirStim = '/Users/Tara/Documents/MATLAB/MATLAB-Programs/CHBH-Programs/AVTemporal-Attention/Stimuli/Stimuli/FaceRemovedBackgrounds/'; %For Mac
+answer = InputPrompt;
+[fileDirStim,fileDirRes] = fileDirCreator(answer);
 
 %% Make variables
 
@@ -58,14 +42,14 @@ afterAud          = zeros(numTrial,1);
 
 %% Setup Auditory Variables
 
-if strcmp(answer{5},'OSX'); deviceID=[]; else; deviceID=1; end
+if strcmp(answer{6},'OSX'); deviceID=[]; else; deviceID=1; end
 
 [toneRhythm,toneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
 %Initializes Sound Driver- PTB
 [condMat,stimpahandle,noStimpahandle] = PTBSoundSetuper(condMat,deviceID,sampRate,nrchannels,FTpower,toneRhythm,toneDetect);
 %% Screen Setup
 
-MEGLab = str2double(answer{4}); % MEG lab computer-> 1 PC->0
+if strcmp(answer{5},'MEG'), MEGLab = 1; else, MEGLab = 0; end % MEG lab computer-> 1 PC->0
 if MEGLab == 1, Screen('Preference', 'SkipSyncTests', 0); else, Screen('Preference', 'SkipSyncTests', 1); end % must be 0 during experiment
 
 %Display distances and sizes -- adjust for the screen in use (Alex's
@@ -103,15 +87,15 @@ visStimPresSecs = ms2sec(50);                              %Visual stimulus pres
 visStimFrames   = round(visStimPresSecs/ifi);
 rectVisStim     = rectVisStimDest(5,5,display,windowRect); %Destination rectangle to present the stimulus
 
-condMat(:,17) = round(condMat(:,15)/ifi);  %Auditory stim onset in frms
-condMat(:,18) = round(condMat(:,16)/ifi);  %Visual stim onset in frms
-condMat(:,19) = condMat(:,18)+3;           %Visual stim offset in frms
+condMat(:,17) = round(condMat(:,15)/ifi);   %Auditory stim onset in frms
+condMat(:,18) = round(condMat(:,16)/ifi);   %Visual stim onset in frms
+condMat(:,19) = condMat(:,18)+3;            %Visual stim offset in frms
 
 [xCenter,yCenter] = RectCenter(windowRect); %Get center coordinates
 fixCrossDimPix    = 30;                     %Size of each arm of fixation cross in pixels
 allCoords         = fixCrossCoord(fixCrossDimPix);
 lineWidthPix      = 4;                      %Line width of cross
-lineColorRGB      = [0.4,0.4,0.4]; %Color of fixation cross
+lineColorRGB      = [0.4,0.4,0.4];          %Color of fixation cross
 Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA'); %Blend funciton on
 
 [trigHandle,trigAdd] = triggerInit(MEGLab); %initiate triggers
@@ -204,5 +188,4 @@ condMatTbl = array2table(condMat,'VariableNames',{'blockType','blockNm','trilNm'
     'vis_onset_frms','vis_offset_frms','last_key_pressed','last_key_time'});  
 %Clear unnecessary files
 % clear ...
-mkdir([fileDirRes, 'Sub' answer{1}]);
 save([fileDirRes, 'Sub' answer{1} filesep 'BehavioralData' filesep])
