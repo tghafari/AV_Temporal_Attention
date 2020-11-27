@@ -61,7 +61,7 @@ Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA');         
 
 %Query the frame duration
 ifi         = Screen('GetFlipInterval',window);
-FRDatapixx  = Screen('NominalFrameRate',window); %Datapixx frame rate
+FRDatapixx  = Screen('NominalFrameRate',window); %Datapixx frame rate -- decide how to not mix up with PC screen FR
 
 %Retreive the maximum priority for this program
 topPriorityLevel = MaxPriority(window);
