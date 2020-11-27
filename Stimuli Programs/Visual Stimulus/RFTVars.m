@@ -1,4 +1,4 @@
-function [visRFTFreq,PCRefreshRate,frmPhaseStep] = RFTVars
+function [visRFTFreq,PCRefreshRate,frmPhaseStep] = RFTVars(window)
 %[visRFTFreq,PCRefreshRate,frmPhaseStep,visRFTPhase] = RFTVars(window,visRFTPhase)
 %Frequency tagging variables and phase steps
 
