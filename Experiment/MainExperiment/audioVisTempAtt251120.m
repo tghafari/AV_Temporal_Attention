@@ -52,23 +52,16 @@ if strcmp(answer{6},'OSX'); deviceID=[]; else; deviceID=1; end
 if strcmp(answer{5},'MEG'), MEGLab = 1; else, MEGLab = 0; end % MEG lab computer-> 1 PC->0
 if MEGLab == 1, Screen('Preference', 'SkipSyncTests', 0); else, Screen('Preference', 'SkipSyncTests', 1); end % must be 0 during experiment
 
-%Display distances and sizes -- adjust for the screen in use (Alex's
-%tag_setup_projector)
-display.dist       = 60; %cm -- laptop
-display.width      = 28.65; %cm -- laptop
-display.resolution = 2560; %pixel -- laptop
+%Introduce visual variables
+[display,screenNumber,black,~,grey] = visVars(answer);
 
-%Primary settings
-PsychDefaultSetup(2);
-screenNumber = max(Screen('Screens')); %Draw to the external screen if avaliable
-black        = BlackIndex(screenNumber);
-white        = WhiteIndex(screenNumber);
-grey         = white/2;
+%Open Screen
 [window,windowRect] = PsychImaging('OpenWindow',screenNumber,grey,[100,100,1000,1000]); %Open an on screen window and color it grey
+Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA');                 %Blend funciton on
 
 %Query the frame duration
-ifi = Screen('GetFlipInterval',window);
-FR  = Screen('NominalFrameRate',window); %Datapixx frame rate
+ifi         = Screen('GetFlipInterval',window);
+FRDatapixx  = Screen('NominalFrameRate',window); %Datapixx frame rate
 
 %Retreive the maximum priority for this program
 topPriorityLevel = MaxPriority(window);
@@ -81,22 +74,24 @@ HideCursor();
 for readImg = 1:size(condMat,1) %Create an openGL texture for face images
     presentingVisStim{readImg} = Screen('MakeTexture',window,visStim{readImg}(5:end,:,:));
 end
-%% Visual stimulus and fixation cross characteristics and hardware timing
+%% Visual stimulus and fixation cross characteristics and hardware timing -- functionize
 
-visStimPresSecs = ms2sec(50);                              %Visual stimulus presentation time in secs
+[visRFTFreq,PCRefreshRate,frmPhaseStep] = RFTVars;
+destVisStim                = rectVisStimDest(5,5,display,windowRect);   %Destination rectangle to present the stimulus
+[destCoordRFT,destRectRFT] = RFTdestCalculator(destVisStim,windowRect); %Calculates centres of rectangles for RFT
+
+%time and frame conversions
+visStimPresSecs = ms2sec(50);                  %Visual stimulus presentation time in secs
 visStimFrames   = round(visStimPresSecs/ifi);
-rectVisStim     = rectVisStimDest(5,5,display,windowRect); %Destination rectangle to present the stimulus
-
-condMat(:,17) = round(condMat(:,15)/ifi);   %Auditory stim onset in frms
-condMat(:,18) = round(condMat(:,16)/ifi);   %Visual stim onset in frms
-condMat(:,19) = condMat(:,18)+3;            %Visual stim offset in frms
+condMat(:,17)   = round(condMat(:,15)/ifi);    %Auditory stim onset in frms
+condMat(:,18)   = round(condMat(:,16)/ifi);    %Visual stim onset in frms
+condMat(:,19)   = condMat(:,18)+visStimFrames; %Visual stim offset in frms
 
 [xCenter,yCenter] = RectCenter(windowRect); %Get center coordinates
 fixCrossDimPix    = 30;                     %Size of each arm of fixation cross in pixels
 allCoords         = fixCrossCoord(fixCrossDimPix);
 lineWidthPix      = 4;                      %Line width of cross
 lineColorRGB      = [0.4,0.4,0.4];          %Color of fixation cross
-Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA'); %Blend funciton on
 
 [trigHandle,trigAdd] = triggerInit(MEGLab); %initiate triggers
 %% Main Experiment
@@ -115,7 +110,7 @@ PsychPortAudio('Start',noStimpahandle,1,inf);
 % Countdown to start
 countDownToBegin(3,window,black)
 
-trilAud = 1;  trilVis = 1; trlVisCntr = 0;
+trilAud = 1;  trilVis = 1; trlVisCntr = 0; RFTPhase = 0;
 for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * repetition of each block
     
     %Beginig of blocks fixation cross
@@ -130,18 +125,29 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
         [pressed,firstPress,~,lastPress] = KbQueueCheck(partDev); 
         if pressed, condMat = responseCollector(condMat,trilAud-1,firstPress,lastPress); end
         end
-        %Trigger an event
-        if frmsInBlk >= condMat(trilVis,18) && frmsInBlk <= condMat(trilVis,19)
+        
+        %Calculate upcoming brightness
+        [visRFTPhase,upcmPhase] = RFTPhaseCalculator(visRFTPhase,frmPhaseStep);
+        upcmBrghtnss = calculateBrghtnss(upcmPhase);
+        
+        %Calculate color for RFT
+        clrByQuad = RFTColorCalculator(upcmBrghtnss);
+        
+  %Start an event 
+        %Visual stimulus + frequency tagging
+        for quadCntr = 1:4
+            if frmsInBlk >= condMat(trilVis,18) && frmsInBlk <= condMat(trilVis,19)
                 %Visual on
-                Screen('DrawTexture',window,presentingVisStim{trilVis},[],rectVisStim);
-                Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
+                Screen('DrawTexture',window,presentingVisStim{trilVis},[],destRectRFT{quadCntr});
+                Screen('DrawLines',window,allCoords,lineWidthPix,clrByQuad(:,quadCntr),destCoordRFT{quadCntr},2);
                 trlVisCntr = trlVisCntr+1;
-        else
-            %Visual off-Fixation cross
-            Screen('DrawLines',window,allCoords,lineWidthPix,lineColorRGB,[xCenter,yCenter],2);
+            else
+                %Visual off-Fixation cross
+                Screen('DrawLines',window,allCoords,lineWidthPix,clrByQuad(:,quadCntr),destCoordRFT{quadCntr},2);
+            end
         end
         if trlVisCntr==1,     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
-        elseif trlVisCntr==3; triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
+        elseif trlVisCntr==3, triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
         vblVisFrms(frmsInBlk,1) = Screen('Flip',window); %Flip the screen every frame
         if trlVisCntr==3, trilVis = trilVis+1; trlVisCntr = 0;  end
 
