@@ -1,8 +1,10 @@
-function [handle, address] = triggerInit(bTrigger)
+function [handle, address] = triggerInit(MEGLab)
+%[handle, address] = triggerInit(MEGLab)
+%Initiates sending triggers to MEG pc
 
 handle = [];
 address = [];
-if bTrigger == 1
+if MEGLab == 1
   address = hex2dec('BFF8'); % check this port address 
   handle = io64;
   status = io64(handle);
