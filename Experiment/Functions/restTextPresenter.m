@@ -33,7 +33,7 @@ DrawFormattedText(window, contTxt, 'center', 'center', color); % Opens message
 Screen('Flip', window);
 KbStrokeWait(experDevCod);
 WaitSecs(.1)
-% resume(soundPlayer) %Resume auditory FT -- DO it after debugging
+resume(soundPlayer) %Resume auditory FT -- DO it after debugging
 
 end
 

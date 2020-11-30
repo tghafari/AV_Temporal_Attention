@@ -76,9 +76,9 @@ for readImg = 1:size(condMat,1) %Create an openGL texture for face images
 end
 %% Visual stimulus and fixation cross characteristics and hardware timing -- functionize
 
-[visRFTFreq,PCRefreshRate,frmPhaseStep] = RFTVars;
+[visRFTFreq,PCRefreshRate,frmPhaseStep] = RFTVars(window);
 destVisStim                = rectVisStimDest(5,5,display,windowRect);   %Destination rectangle to present the stimulus
-[destCoordRFT,destRectRFT] = RFTdestCalculator(destVisStim,windowRect); %Calculates centres of rectangles for RFT
+[destCoordRFT,destRectRFT] = RFTDestCalculator(destVisStim,windowRect); %Calculates centres of rectangles for RFT
 
 %time and frame conversions
 visStimPresSecs = ms2sec(50);                  %Visual stimulus presentation time in secs
@@ -103,15 +103,15 @@ Screen('Flip',window);
 vbl = getReadyTextPresenter(window,black,expDev,condMat); %Waits for experimenter's command and gets baseline VBL
 
 % Play auditory frequency tagging tone
-% play(playerRFT)
+play(playerRFT)
 PsychPortAudio('Start',stimpahandle,1,inf);
 PsychPortAudio('Start',noStimpahandle,1,inf);
 
 % Countdown to start
 countDownToBegin(3,window,black)
 
-trilAud = 1;  trilVis = 1; trlVisCntr = 0; RFTPhase = 0;
-for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * repetition of each block
+trilAud = 1;  trilVis = 1; trlVisCntr = 0; visRFTPhase = 0;
+for blk = 1:2 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * repetition of each block
     
     %Beginig of blocks fixation cross
     triggerSend(trigHandle,trigAdd,trigStart,MEGLab); 
@@ -128,7 +128,7 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
         
         %Calculate upcoming brightness
         [visRFTPhase,upcmPhase] = RFTPhaseCalculator(visRFTPhase,frmPhaseStep);
-        upcmBrghtnss = calculateBrghtnss(upcmPhase);
+        upcmBrghtnss = RFTBrghtnssCalculator(upcmPhase);
         
         %Calculate color for RFT
         clrByQuad = RFTColorCalculator(upcmBrghtnss);
@@ -149,11 +149,11 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
         if trlVisCntr==1,     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
         elseif trlVisCntr==3, triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
         vblVisFrms(frmsInBlk,1) = Screen('Flip',window); %Flip the screen every frame
-        if trlVisCntr==3, trilVis = trilVis+1; trlVisCntr = 0;  end
-
+        if trlVisCntr==16, trilVis = trilVis+1; trlVisCntr = 0;  end
+        
+        %Auditory stimulus
         if frmsInBlk == condMat(trilAud,17) 
             audOnset = GetSecs;
-            %Auditory on
             triggerSend(trigHandle,trigAdd,trigAud,MEGLab); 
             condMat(trilAud,14)  = PsychPortAudio('RescheduleStart',condMat(trilAud,10),audOnset,1);
             audStatus{trilAud,1} = PsychPortAudio('GetStatus',condMat(trilAud,10));  %Can be removed after debugging
@@ -161,20 +161,21 @@ for blk=1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * 
             trilAud = trilAud+1;
         end
     end
-    triggerSend(trigHandle,trigAdd,trigOff,MEGLab); %clear trigger
-    
-    %Rest after each block 
-    [blckHistory,~] = restTextPresenter(blckHistory,blk,playerRFT,window,black,expDev,numTrial,trilAud,condMat);
-    
     afterWhile(blk)=GetSecs-beforeWhile; %should be removed after debugging
+    triggerSend(trigHandle,trigAdd,trigOff,MEGLab); %clear trigger
+        
     %Thank you messeage at the end
-    if trilAud == 48  && trilVis == 48
+    if blk == 2 %numBlock*length(blockInd)
         endTextPresenter(window,black)
         PsychPortAudio('Stop',stimpahandle);
         PsychPortAudio('Stop',noStimpahandle);
         KbQueueStop(partDev);
         sca
-    end
+        return
+    end            
+    
+    %Rest after each block
+    [blckHistory,~] = restTextPresenter(blckHistory,blk,playerRFT,window,black,expDev,numTrial,trilAud,condMat);
 end
 
 PsychPortAudio('Close');
@@ -194,4 +195,4 @@ condMatTbl = array2table(condMat,'VariableNames',{'blockType','blockNm','trilNm'
     'vis_onset_frms','vis_offset_frms','last_key_pressed','last_key_time'});  
 %Clear unnecessary files
 % clear ...
-save([fileDirRes, 'Sub' answer{1} filesep 'BehavioralData' filesep])
+% save([fileDirRes, 'Sub' answer{1} filesep 'BehavioralData' filesep])
