@@ -44,9 +44,9 @@ afterAud          = zeros(numTrial,1);
 
 if strcmp(answer{6},'OSX'); deviceID=[]; else; deviceID=1; end
 
-[toneRhythm,toneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
+[toneNoise,toneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
 %Initializes Sound Driver- PTB
-[condMat,stimpahandle,noStimpahandle] = PTBSoundSetuper(condMat,deviceID,sampRate,nrchannels,FTpower,toneRhythm,toneDetect);
+[condMat,stimpahandle,noStimpahandle] = PTBSoundSetuper(condMat,deviceID,sampRate,nrchannels,FTpower,toneNoise,toneDetect);
 %% Screen Setup
 
 if strcmp(answer{5},'MEG'), MEGLab = 1; else, MEGLab = 0; end % MEG lab computer-> 1 PC->0
@@ -76,7 +76,7 @@ for readImg = 1:size(condMat,1) %Create an openGL texture for face images
 end
 %% Visual stimulus and fixation cross characteristics and hardware timing -- functionize
 
-[visRFTFreq,PCRefreshRate,frmPhaseStep] = RFTVars(window);
+[visRFTFreq,PCRefreshRate,frmPhaseStep,photoDiodePatch] = RFTVars(window,windowRect,display);
 destVisStim                = rectVisStimDest(5,5,display,windowRect);   %Destination rectangle to present the stimulus
 [destCoordRFT,destRectRFT] = RFTDestCalculator(destVisStim,windowRect); %Calculates centres of rectangles for RFT
 
@@ -111,7 +111,7 @@ PsychPortAudio('Start',noStimpahandle,1,inf);
 countDownToBegin(3,window,black)
 
 trilAud = 1;  trilVis = 1; trlVisCntr = 0; visRFTPhase = 0;
-for blk = 1:2 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * repetition of each block
+for blk = 1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) * repetition of each block
     
     %Beginig of blocks fixation cross
     triggerSend(trigHandle,trigAdd,trigStart,MEGLab); 
@@ -140,10 +140,12 @@ for blk = 1:2 %(numBlock*length(blockInd))  %total nr of blocks = block types (3
                 %Visual on
                 Screen('DrawTexture',window,presentingVisStim{trilVis},[],destRectRFT{quadCntr});
                 Screen('DrawLines',window,allCoords,lineWidthPix,clrByQuad(:,quadCntr),destCoordRFT{quadCntr},2);
+                Screen('FillRect',window,clrByQuad(:,quadCntr),photoDiodePatch);
                 trlVisCntr = trlVisCntr+1;
             else
                 %Visual off-Fixation cross
                 Screen('DrawLines',window,allCoords,lineWidthPix,clrByQuad(:,quadCntr),destCoordRFT{quadCntr},2);
+                Screen('FillRect',window,clrByQuad(:,quadCntr),photoDiodePatch);
             end
         end
         if trlVisCntr==1,     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
@@ -171,7 +173,7 @@ for blk = 1:2 %(numBlock*length(blockInd))  %total nr of blocks = block types (3
         PsychPortAudio('Stop',noStimpahandle);
         KbQueueStop(partDev);
         sca
-        return
+        break
     end            
     
     %Rest after each block
