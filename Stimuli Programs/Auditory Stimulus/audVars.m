@@ -1,7 +1,9 @@
-function [rmpToneRhythm,rmpToneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars 
-% [rmpToneRhythm,rmpToneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars 
+function [rmpToneNoise,rmpToneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars 
+% [rmpToneNoise,rmpToneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars 
 %This function introduces auditory variables for both stimulus and
 %frequency tagging sounds
+
+rng('shuffle')
 
 %Basic sound vars
 sampRate      = 48000;                     %Frequency of the sound
@@ -23,7 +25,7 @@ rmpDetect  = toneDetect(1:length(audRampVec));
 ampEnv = [linspace(0,1,length(rmpRhythm)),ones(1,length(toneRhythm)),linspace(1,0,length(rmpRhythm))];
 
 %Multiply the amplitude envelope by the original waveform
-rmpToneRhythm = [rmpRhythm,toneRhythm,rmpRhythm] .* ampEnv;
+rmpToneNoise = [rmpRhythm,toneRhythm,rmpRhythm] .* ampEnv;
 rmpToneDetect = [rmpDetect,toneDetect,rmpDetect] .* ampEnv;
 
 %Make frequency tagging noise
@@ -34,3 +36,8 @@ nrchannels = 2;                         %Number of channels
 [FTAuditory,trigger]  = create_AM(tagFreq,FTpower,FTduration,sampRate,1); %Trigger is not used here
 playerRFT             = audioplayer(FTAuditory,sampRate);
 end
+
+noise = randn(1,sampRate*duration); %Gausian noise
+noise = noise/max(abs(noise)*2); %-.5 to .5 normalization
+toneSoundofDetect = indivAmp*sin(2*pi*toneFreq*audTimeVec)+noise;
+toneSoundofNoise = noise;
