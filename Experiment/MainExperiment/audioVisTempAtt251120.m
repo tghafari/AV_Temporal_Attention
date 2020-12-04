@@ -103,7 +103,7 @@ Screen('Flip',window);
 vbl = getReadyTextPresenter(window,black,expDev,condMat); %Waits for experimenter's command and gets baseline VBL
 
 % Play auditory frequency tagging tone
-play(playerRFT)
+% play(playerRFT)
 PsychPortAudio('Start',stimpahandle,1,inf);
 PsychPortAudio('Start',noStimpahandle,1,inf);
 
@@ -177,7 +177,7 @@ for blk = 1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) 
     end            
     
     %Rest after each block
-    [blckHistory,~] = restTextPresenter(blckHistory,blk,playerRFT,window,black,expDev,numTrial,trilAud,condMat);
+    [blckHistory,~] = restTextPresenter(blckHistory,blk,playerRFT,window,black,expDev,numTrial,trilAud,condMat,0);
 end
 
 PsychPortAudio('Close');
