@@ -1,5 +1,5 @@
-function [blckHistory,vbl] = restTextPresenter(blckHistory,block,soundPlayer,window,color,experDevCod,numTrial,trial,condMat)
-%[blckHistory,vbl] = restTextPresenter(blckHistory,block,soundPlayer,window,color,experDevCod,numTrial,trial,condMat)
+function [blckHistory,vbl] = restTextPresenter(blckHistory,block,soundPlayer,window,color,experDevCod,numTrial,trial,condMat,RFT)
+%[blckHistory,vbl] = restTextPresenter(blckHistory,block,soundPlayer,window,color,experDevCod,numTrial,trial,condMat,RFT)
 %   text is shown when the rest starts (end of each block)
 %soundPlayer -> frequency tagging sound
 %window -> output of PsychImaging('OpenWindow',...)
@@ -8,6 +8,7 @@ function [blckHistory,vbl] = restTextPresenter(blckHistory,block,soundPlayer,win
 %numTrial -> total number of trials (output of varIntro)
 %trial -> the trial we are in
 %condMat -> the main condition matrix
+%RFT -> if 1: playing auditory RFT 
 
 blockTypTxt={'Auditory Regular \n Visual Irregular','Auditory Irregular \n Visual Regular','Auditory Irregular \n Visual Irregular'};
 
@@ -33,7 +34,8 @@ DrawFormattedText(window, contTxt, 'center', 'center', color); % Opens message
 Screen('Flip', window);
 KbStrokeWait(experDevCod);
 WaitSecs(.1)
-resume(soundPlayer) %Resume auditory FT -- DO it after debugging
+%Resume auditory FT 
+if RFT,resume(soundPlayer); end
 
 end
 
