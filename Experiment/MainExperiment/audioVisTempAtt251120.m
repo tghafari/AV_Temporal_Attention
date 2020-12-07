@@ -42,7 +42,8 @@ afterAud          = zeros(numTrial,1);
 
 %% Setup Auditory Variables
 
-if strcmp(answer{6},'OSX'); deviceID=[]; else; deviceID=1; end
+if strcmp(answer{6},'OSX'); deviceID=[]; elseif strcmp(answer{6},'Win'), deviceID=1; 
+elseif strcmp(answer{6},'MEG'), deviceID=20; end
 
 [toneNoise,toneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
 %Initializes Sound Driver- PTB
@@ -62,6 +63,13 @@ Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA');         
 %Query the frame duration
 ifi         = Screen('GetFlipInterval',window);
 FRDatapixx  = Screen('NominalFrameRate',window); %Datapixx frame rate -- decide how to not mix up with PC screen FR
+
+% Propixx
+% Datapixx('Close')
+propixx_mode = 5;
+Datapixx('Open');
+Datapixx('SetPropixxDlpSequenceProgram',propixx_mode);
+Datapixx('RegWrRd')
 
 %Retreive the maximum priority for this program
 topPriorityLevel = MaxPriority(window);
@@ -149,7 +157,7 @@ for blk = 1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) 
             end
         end
         if trlVisCntr==1,     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
-        elseif trlVisCntr==3, triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
+        elseif trlVisCntr==16, triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
         vblVisFrms(frmsInBlk,1) = Screen('Flip',window); %Flip the screen every frame
         if trlVisCntr==16, trilVis = trilVis+1; trlVisCntr = 0;  end
         
