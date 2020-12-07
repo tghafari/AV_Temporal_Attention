@@ -16,7 +16,7 @@ clear; clc
 %% Input and OS folder preparations
 
 answer = InputPrompt;
-[fileDirStim,fileDirRes] = fileDirCreator(answer);
+[fileDirStim,fileDirRes] = fileDirCreator(answer); %needs to be adjusted to MEG PC folder
 
 %% Make variables
 
@@ -42,8 +42,8 @@ afterAud          = zeros(numTrial,1);
 
 %% Setup Auditory Variables
 
-if strcmp(answer{6},'OSX'); deviceID=[]; elseif strcmp(answer{6},'Win'), deviceID=1; 
-elseif strcmp(answer{6},'MEG'), deviceID=20; end
+if strcmp(answer{5},'Mac'); deviceID=[]; elseif strcmp(answer{5},'Win'), deviceID=1; 
+elseif strcmp(answer{5},'MEG'), deviceID=20; end
 
 [toneNoise,toneDetect,sampRate,FTpower,nrchannels,trigger,playerRFT] = audVars;
 %Initializes Sound Driver- PTB
@@ -51,7 +51,8 @@ elseif strcmp(answer{6},'MEG'), deviceID=20; end
 %% Screen Setup
 
 if strcmp(answer{5},'MEG'), MEGLab = 1; else, MEGLab = 0; end % MEG lab computer-> 1 PC->0
-if MEGLab == 1, Screen('Preference', 'SkipSyncTests', 0); else, Screen('Preference', 'SkipSyncTests', 1); end % must be 0 during experiment
+if MEGLab == 1, Screen('Preference', 'SkipSyncTests', 0); 
+else, Screen('Preference', 'SkipSyncTests', 1); end % must be 0 during experiment
 
 %Introduce visual variables
 [display,screenNumber,black,~,grey] = visVars(answer);
@@ -66,10 +67,12 @@ FRDatapixx  = Screen('NominalFrameRate',window); %Datapixx frame rate -- decide 
 
 % Propixx
 % Datapixx('Close')
+if MEGLab == 1
 propixx_mode = 5;
 Datapixx('Open');
 Datapixx('SetPropixxDlpSequenceProgram',propixx_mode);
 Datapixx('RegWrRd')
+end
 
 %Retreive the maximum priority for this program
 topPriorityLevel = MaxPriority(window);
@@ -104,7 +107,7 @@ lineColorRGB      = [0.4,0.4,0.4];          %Color of fixation cross
 [trigHandle,trigAdd] = triggerInit(MEGLab); %initiate triggers
 %% Main Experiment
 
-% Start KbQueu routine
+% Start KbQueu routine -- needs modification for Nata box
 [expDev,partDev] = KbQueueStarterRoutine(MEGLab);
 
 Screen('Flip',window);
@@ -156,7 +159,7 @@ for blk = 1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) 
                 Screen('FillRect',window,clrByQuad(:,quadCntr),photoDiodePatch);
             end
         end
-        if trlVisCntr==1,     triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
+        if trlVisCntr==1,      triggerSend(trigHandle,trigAdd,trigVisOn,MEGLab); 
         elseif trlVisCntr==16, triggerSend(trigHandle,trigAdd,trigVisOff,MEGLab); end  
         vblVisFrms(frmsInBlk,1) = Screen('Flip',window); %Flip the screen every frame
         if trlVisCntr==16, trilVis = trilVis+1; trlVisCntr = 0;  end

@@ -4,10 +4,10 @@ function answer = InputPrompt
 %Sub #,MEG PC subjects code, MEG PC date format, MEGP=1 PC=0, OS-> mac=XOS
 %win=Win
 
-prompt     = {'Subject Numbed','Subject Code','Date','Training/Task','Testing PC','OS'}; 
+prompt     = {'Subject Numbed','Subject Code','Date','Training/Task','Testing PC'}; 
 dlgtitle   = 'Details';
-dims       = [1,30;1,30;1,30;1,30;1,30;1,30];
-defaultans = {'101','B51A','20201120','Task','PC','OSX'};
+dims       = [1,30;1,30;1,30;1,30;1,30];
+defaultans = {'101','B51A','20201120','Task','Mac'};
 answer     = inputdlg(prompt,dlgtitle,dims,defaultans);
 
 end
