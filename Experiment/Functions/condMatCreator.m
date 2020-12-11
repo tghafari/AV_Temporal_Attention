@@ -1,5 +1,5 @@
-function [condMatPrim,blkCondCell,condMat,eventTimer] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp)
-% [condMatPrim, condCell, condMat] = condMatCreator(blockInd, numBlock, numStim, SOARef, rhythmicSOA, faceRand,correctResp)
+function [condMatPrim,blkCondCell,condMat,eventTimer] = condMatCreator(blockInd,numBlock,numTrial,numStim,SOARef,rhythmicSOA,faceRand,correctResp,indivAmp)
+% [condMatPrim, condCell, condMat] = condMatCreator(blockInd, numBlock, numStim, SOARef, rhythmicSOA, faceRand,correctResp,indivAmp)
 %   Creates conition matrix for audioVisTempAtt program
 
 %Preallocation
@@ -45,6 +45,10 @@ condMat(condMat(:,1)==3,[5 7])=0; %both auditory and visual arrhythmic
 %Define which face stim is presented in each trial
 condMat(:,9)=faceRand;
 
+%Define auditory vars
+condMat(condMat(:,8)==1,10) = indivAmp;
+condMat(condMat(:,8)==0,10) = 0;
+
 %Creat a timer for events
 %Calculate stimuli presentation times with elapsed time
 for blkNr=1:(numBlock*length(blockInd))
@@ -62,7 +66,7 @@ for blkNr=1:(numBlock*length(blockInd))
         [ones(12,1);3*ones(12,1)]);
     eventTimer(24*(blkNr-1)+1:24*(blkNr-1)+24,:)=sortrows(timrtmp);
 end
-% eventTimer=round(eventTimer,5); %compensate for very very small numbers that have been added without any apparent reasons
+eventTimer=round(eventTimer,5); %compensate for very very small numbers that have been added without any apparent reasons
 
 %Define where to present both stimulus types
 for dbl=1:length(eventTimer)-1

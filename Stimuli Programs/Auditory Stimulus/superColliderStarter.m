@@ -1,4 +1,7 @@
-%% Connect to Supercollider
+function [SCTriggerSound,u] = superColliderStarter
+%[SCTriggerSound,u] = superColliderStarter
+% Connect to Supercollider
+
 % Run this after executing supercollider_example.scd
 
 if ~exist('udp', 'file')
@@ -17,22 +20,12 @@ port = 57120; % Which port to connect to
 u = udp(ip_address, port);
 fopen(u);
 
-% Define a helper function to trigger sounds: `trigger_sound`
+% Define a helper function to trigger sounds to Super Collider: `triggerSound`
 % It takes one arg: The amplitude of the beep relative to the noise (from 0-1)
-beep_freq = 1000.0; % Frequency of the beep in Hz
+beepFreq = 1000.0; % Frequency of the beep in Hz
 oscpath = '/stimulus'; % Name of the OSC responded (specified in Supercollider)
-arg_types = 'ff'; % Type of each argument. These are floats
-trigger_sound = @(beep_amp) oscsend(u, oscpath, arg_types, beep_amp, beep_freq);
+argTypes = 'ff'; % Type of each argument. These are floats
+SCTriggerSound = @(beepAmp) oscsend(u, oscpath, argTypes, beepAmp, beepFreq);
 
-%% Makse some noises
-
-beep_amps = linspace(0, 1, 11); % Try out beeps at different volumes
-
-for beep_amp = beep_amps
-    trigger_sound(beep_amp)
-    pause(1)
 end
-    
-%% Close the connection
-% Run this to clean up when you're finished
-fclose(u);
+
