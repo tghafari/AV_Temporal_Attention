@@ -7,7 +7,7 @@ function [expDevCode,partDevCode] = KbQueueStarterRoutine(MEGLab)
 
 KbName('UnifyKeyNames');
 % KB response: '4$' and '7&' are the left and right index fingers of the (5-button) NATA boxes
-if MEGLab == 1, KB = KbName('7&'); expDevCode=-1; partDevCode=-1;
+if MEGLab == 1, KB = KbName('7&'); expDevCode=0; partDevCode=0;
 else, KB = KbName('LeftShift'); expDevCode=-1; partDevCode=-1; end
 
 scanList = zeros(1,256);
