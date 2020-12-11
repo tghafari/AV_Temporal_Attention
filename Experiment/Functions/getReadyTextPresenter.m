@@ -1,5 +1,5 @@
-function vbl = getReadyTextPresenter(window,color,experDevCod,condMat)
-%getReadyTextPresenter(window,color,respDevCod)
+function vbl = getReadyTextPresenter(window,color,destCentreRFT,experDevCod,condMat)
+%vbl = getReadyTextPresenter(window,color,destCentreRFT,experDevCod,condMat)
 %window => ouputted from PsychImaging
 %color => the color of text
 %experDevCod => the code of response device (external keyboard=>9 internal
@@ -11,12 +11,16 @@ nxtBlockTxt=['This block is: \n' blockTypTxt{condMat(1,1)}];
 readyTxt = 'Get ready. Sit still. The experiment will start shortly';
 
 Screen('Flip',window);
-DrawFormattedText(window,nxtBlockTxt,'center','center',color); % Opens message
+for quadCntr = 1:4
+    DrawFormattedText(window,nxtBlockTxt,destCentreRFT{quadCntr}(1),destCentreRFT{quadCntr}(2),color); % Opens message
+end
 Screen('Flip',window);
 WaitSecs(0.03*60);
 
-Screen('Flip',window);
-DrawFormattedText(window,readyTxt,'center','center',color); % Opens message
+for quadCntr = 1:4
+    Screen('Flip',window);
+    DrawFormattedText(window,readyTxt,destCentreRFT{quadCntr}(1),destCentreRFT{quadCntr}(2),color); % Opens message
+end
 Screen('Flip',window);
 
 KbStrokeWait(experDevCod);
