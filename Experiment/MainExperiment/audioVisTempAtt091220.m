@@ -47,7 +47,8 @@ else, Screen('Preference', 'SkipSyncTests', 1); end % must be 0 during experimen
 [display,screenNumber,black,~,grey] = visVars(answer);
 
 %Open Screen
-[window,windowRect] = PsychImaging('OpenWindow',screenNumber,grey,[100,100,1000,1000]); %Open an on screen window and color it grey
+[window,windowRect] = PsychImaging('OpenWindow',screenNumber,grey);
+%,[100,100,1000,1000]); %Open an on screen window and color it grey
 Screen('BlendFunction',window,'GL_SRC_ALPHA','GL_ONE_MINUS_SRC_ALPHA');                 %Blend funciton on
 
 %Query the frame duration
@@ -76,8 +77,8 @@ end
 %% Visual stimulus and fixation cross characteristics and hardware timing -- functionize
 
 [visRFTFreq,PCRefreshRate,frmPhaseStep,photoDiodePatch] = RFTVars(window,windowRect,display,MEGLab);
-destVisStim                = rectVisStimDest(5,5,display,windowRect);   %Destination rectangle to present the stimulus
-[destCoordRFT,destRectRFT] = RFTDestCalculator(destVisStim,windowRect); %Calculates centres of rectangles for RFT
+destVisStim = rectVisStimDest(5,5,display,windowRect);   %Destination rectangle to present the stimulus
+[destCoordRFT,destRectRFT,destCentreRFT] = RFTDestCalculator(destVisStim,windowRect); %Calculates centres of rectangles for RFT
 
 %time and frame conversions
 visStimPresSecs = ms2sec(50);                  %Visual stimulus presentation time in secs
@@ -99,7 +100,7 @@ lineColorRGB      = [0.4,0.4,0.4];          %Color of fixation cross
 [expDev,partDev] = KbQueueStarterRoutine(MEGLab);
 
 Screen('Flip',window);
-vbl = getReadyTextPresenter(window,black,expDev,condMat); %Waits for experimenter's command and gets baseline VBL
+vbl = getReadyTextPresenter(window,black,destCentreRFT,expDev,condMat); %Waits for experimenter's command and gets baseline VBL
 
 % Countdown to start
 countDownToBegin(3,window,black)
@@ -168,7 +169,7 @@ for blk = 1 %(numBlock*length(blockInd))  %total nr of blocks = block types (3) 
     end            
     
     %Rest after each block
-    [blckHistory,~] = restTextPresenter(blckHistory,blk,window,black,expDev,numTrial,trilAud,condMat);
+    [blckHistory,~] = restTextPresenter(blckHistory,blk,window,black,destCentreRFT,expDev,numTrial,trilAud,condMat);
 end
 
 fclose(u);
